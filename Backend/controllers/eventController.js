@@ -32,3 +32,13 @@ exports.archiveEvent = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.restoreEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Event.update({ is_archived: false }, { where: { event_id: id } });
+        res.json({ message: "Event restored" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
