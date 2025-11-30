@@ -1,18 +1,29 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useSearchParams, Link } from 'react-router-dom'; // <--- 1. Import useSearchParams
 
 export default function RegistrationForm() {
   const [events, setEvents] = useState([]);
+  const [searchParams] = useSearchParams(); // <--- 2. Initialize hook
+  
   const [formData, setFormData] = useState({
-    first_name: '', last_name: '', email: '', phone: '', organization_or_school: '', event_id: ''
+    first_name: '', last_name: '', email: '', phone: '', organization_or_school: '', 
+    event_id: '' 
   });
   const [status, setStatus] = useState({ message: '', type: '' });
 
   useEffect(() => {
     axios.get('http://localhost:3000/api/events')
-      .then(res => setEvents(res.data))
+      .then(res => {
+        setEvents(res.data);
+        // 3. Auto-select event if ID is in URL
+        const urlEventId = searchParams.get('event_id');
+        if (urlEventId) {
+          setFormData(prev => ({ ...prev, event_id: urlEventId }));
+        }
+      })
       .catch(err => console.error(err));
-  }, []);
+  }, [searchParams]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -42,8 +53,13 @@ export default function RegistrationForm() {
     <div className="flex justify-center items-center min-h-screen bg-slate-100 p-6">
       <div className="w-full max-w-lg bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
         
-        {/* Header - Dark & Cool */}
-        <div className="bg-slate-900 p-8 text-center">
+        {/* Header */}
+        <div className="bg-slate-900 p-8 text-center relative">
+          
+          <Link to="/" className="absolute left-6 top-6 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 px-4 rounded-lg transition flex items-center gap-2 shadow-sm border border-slate-700 hover:border-slate-600">
+             Back
+          </Link>
+
           <h2 className="text-2xl font-bold text-white tracking-wide">Event Registration</h2>
           <p className="text-slate-400 mt-2 text-sm">Join us! Fill in your details below.</p>
         </div>
@@ -54,7 +70,7 @@ export default function RegistrationForm() {
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Select Event</label>
               <div className="relative">
                 <select name="event_id" value={formData.event_id} onChange={handleChange} required className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition text-slate-700">
-                  <option value="">Choose an Event</option>
+                  <option value="">-- Choose an Event --</option>
                   {events.map(event => !event.is_archived && (
                     <option key={event.event_id} value={event.event_id}>{event.name}</option>
                   ))}
